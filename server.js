@@ -18,19 +18,46 @@ io.on('connection', (socket) => {
   // Add user to the list
   users.push(socket.id);
 
-  // Handle messages (for signaling)
+  // Handle chat ready
+  socket.on('chatReady', () => {
+    const randomUser = users[Math.floor(Math.random() * users.length)];
+    socket.emit('chatStart', { target: randomUser });
+  });
+
+  // Handle next chat
+  socket.on('nextChat', () => {
+    users = users.filter(user => user !== socket.id);
+    const randomUser = users[Math.floor(Math.random() * users.length)];
+    socket.emit('chatStart', { target: randomUser });
+  });
+
+  // Handle video ready
+  socket.on('videoReady', () => {
+    const randomUser = users[Math.floor(Math.random() * users.length)];
+    socket.emit('videoStart', { target: randomUser });
+  });
+
+  // Handle next video
+  socket.on('nextVideo', () => {
+    users = users.filter(user => user !== socket.id);
+    const randomUser = users[Math.floor(Math.random() * users.length)];
+    socket.emit('videoStart', { target: randomUser });
+  });
+
+  // Handle signals (for video call setup)
   socket.on('signal', (data) => {
-    // Send the signal to the intended peer
-    socket.to(data.target).emit('signal', {
-      signal: data.signal,
-      sender: socket.id,
-    });
+    socket.to(data.target).emit('signal', { signal: data.signal, sender: socket.id });
+  });
+
+  // Handle chat messages
+  socket.on('chatMessage', (message) => {
+    socket.broadcast.emit('chatMessage', message);
   });
 
   // Handle disconnection
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
-    users = users.filter((user) => user !== socket.id);
+    users = users.filter(user => user !== socket.id);
   });
 });
 
